@@ -1,0 +1,39 @@
+{
+    "configurations": [
+    {
+        "name": "Flutter: Attach to Device",
+        "type": "dart",
+        "request": "attach"
+    },
+        {
+            "name": "Attach by Process ID",
+            "processId": "${command:PickProcess}",
+            "request": "attach",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node"
+        },
+    {
+        "name": "Debug iOS",
+        "cwd": "${workspaceFolder}",
+        "type": "reactnative",
+        "request": "launch",
+        "platform": "ios"
+    },
+        {
+            "type": "node-terminal",
+            "name": "Run Script: ios (simulator)",
+            "request": "launch",
+            "command": "React-native run-ios",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "node-terminal",
+            "name": "Run Script: ios (may Trinh)",
+            "request": "launch",
+            "command": "React-native run-ios —device=“TRINH’s iPhone”",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
