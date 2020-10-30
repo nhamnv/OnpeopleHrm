@@ -6,7 +6,7 @@
  * @flow strict-local
  */
 
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,7 +14,6 @@ import {
   View,
   Text,
   StatusBar,
-  YellowBox,
   LogBox,
 } from 'react-native';
 import HrmBrowser from './_HrmBrowser';
@@ -25,15 +24,14 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 import DeviceInfo from 'react-native-device-info';
-import {NetworkInfo} from 'react-native-network-info';
+import { NetworkInfo } from 'react-native-network-info';
 import Geolocation from '@react-native-community/geolocation';
-import symbolicateStackTrace from 'react-native/Libraries/Core/Devtools/symbolicateStackTrace';
-
-LogBox.ignoreAllLogs(true);
+//-------------------------------------------------------------------------------------------------
 
 const App: () => React$Node = () => {
   const [macWifi, setMacWifi] = useState('');
   const [uuid, setuuid] = useState('');
+  //const granted = await getLocationPermissions();
 
   Geolocation.getCurrentPosition(
     (info) => console.log(info),
@@ -46,13 +44,18 @@ const App: () => React$Node = () => {
   );
   useEffect(() => {
     try {
+      
       let uniqueId = DeviceInfo.getUniqueId();
       setuuid(uniqueId);
 
-      NetworkInfo.getBSSID().then((bssid) => {
+      NetworkInfo.getBSSID((bssid) => {
         setMacWifi(bssid);
+      },(error) => {
+        alert('LLL::'+error);
       });
-    } catch (error) {}
+    } catch (error) { 
+      
+    }
   });
   return (
     <>
@@ -82,5 +85,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
 });
+//-------------------------------------------------------------------------------------------------
 
 export default App;

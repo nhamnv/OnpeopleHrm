@@ -1,4 +1,4 @@
-import React, {Component, useCallback, useState} from 'react';
+import React, { Component, useCallback, useState } from 'react';
 import {
   Dimensions,
   StatusBar,
@@ -6,10 +6,12 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-import {getUniqueId, supported32BitAbis} from 'react-native-device-info';
-import {WebView} from 'react-native-webview';
+import { getUniqueId, supported32BitAbis } from 'react-native-device-info';
+import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-community/async-storage';
-import {getStatusBarHeight} from 'react-native-status-bar-height';
+import { getStatusBarHeight } from 'react-native-status-bar-height';
+
+//-------------------------------------------------------------------------------------------------
 
 const ActivityIndicatorImplement = () => {
   return (
@@ -24,9 +26,12 @@ const _height = Math.round(
 const _width = Math.round(Dimensions.get('screen').width);
 const _hrmDomainKey = 'HrmDomain';
 //var StrHrmUrl = 'http://testhrm.ml/domain';
-var StrHrmUrl = 'http://onpeople.asia/domain';
-//var StrHrmUrl = 'http://hrm.novaon.asia/login';
-
+//var StrHrmUrl = 'https://onpeople.asia/domain';
+var StrHrmUrl = 'https://hrm.novaon.asia/login';
+//var StrHrmUrl = 'https://hrm.novaon.asia/logout';
+var currentUrl = '';
+const MacWifi = '';
+//-------------------------------------------------------------------------------------------------
 const _persisDomain = async (key, jsonObj) => {
   if (jsonObj) {
     await AsyncStorage.setItem(
@@ -42,8 +47,12 @@ const _persisDomain = async (key, jsonObj) => {
 const _getPersisDomain = async (key) => {
   await AsyncStorage.getItem(key).then((result) => {
     StrHrmUrl = result;
+    if(!StrHrmUrl){
+      StrHrmUrl = 'https://onpeople.asia/domain';
+    }
   });
 };
+//-------------------------------------------------------------------------------------------------
 
 class HrmBrowser extends Component {
   webView = null;
@@ -51,29 +60,34 @@ class HrmBrowser extends Component {
   constructor() {
     //alert(getStatusBarHeight());
     _getPersisDomain(_hrmDomainKey).then(() => {
-      // eslint-disable-next-line no-alert
-      // alert('StrHrmUrl::' + StrHrmUrl);
+  
     });
 
     super();
   }
 
   render() {
+
     const onLoadEnd = () => {
       let data = {
         Command: '__apppostSaveCheckinoutPanelState',
         UserMac: this.props.uuid,
-        WifiMac: this.props.macWifi,
+        WifiMac: MacWifi,//this.props.macWifi,
       };
       this.webView.postMessage(JSON.stringify(data));
-      //alert(JSON.stringify(cmd));
+      //alert(data.WifiMac);
+    };
+
+    const onNavigationStateChange = (webViewState) => {
+      currentUrl = webViewState.url;
+      //alert(currentUrl);
     };
 
     const onMessage = (event) => {
       let data = JSON.parse(event.nativeEvent.data);
       let postbackData = {};
       postbackData.UserMac = this.props.uuid;
-      postbackData.WifiMac = this.props.macWifi;
+      postbackData.WifiMac = MacWifi;//'this.props.macWifi';
 
       if (data) {
         // ------------------------------------------
@@ -84,6 +98,8 @@ class HrmBrowser extends Component {
         } else if (data.Command === 'checkinout') {
           postbackData.Command = '__apppostCheckinOut';
           this.webView.postMessage(JSON.stringify(postbackData));
+
+          alert('Mac wifi ::' + postbackData.WifiMac  +'\n' + 'Mac User ::' + postbackData.UserMac);
         }
         // ------------------------------------------
         else if (data.Command === 'savedomain') {
@@ -92,16 +108,16 @@ class HrmBrowser extends Component {
           if ((newDomain && StrHrmUrl !== newDomain) || !StrHrmUrl) {
             _persisDomain(_hrmDomainKey, data.data).then(() => {
               // eslint-disable-next-line no-alert
-              //alert('Da luu domain newDomain::' + newDomain);
+              // alert('Da luu domain newDomain::' + newDomain.Domain);
             });
           }
           postbackData.Command = '__apppostSaveCheckinoutPanelState';
           this.webView.postMessage(JSON.stringify(postbackData));
-          // eslint-disable-next-line no-alert
-          //alert('From app::' + JSON.stringify(postbackData));
+          // alert('From app::' + JSON.stringify(postbackData));
         }
       }
     };
+
     const onLoadError = () => {
       //alert('onLoadError');
     };
@@ -117,15 +133,15 @@ class HrmBrowser extends Component {
         }}
         useWebKit={true}
         javaScriptEnabled={true}
-        onShouldStartLoadWithRequest={() => true}
-        source={{uri: StrHrmUrl}}
-        style={{flex: 1, height: _height, width: _width}}
+        source={{ uri: StrHrmUrl }}
+        style={{ flex: 1, height: _height, width: _width }}
         onLoadEnd={onLoadEnd}
         onMessage={onMessage}
         onLoadError={onLoadError}
         renderError={onRenderError}
         startInLoadingState={true}
         renderLoading={ActivityIndicatorImplement}
+        onNavigationStateChange={onNavigationStateChange.bind(this)}
       />
     );
   }
@@ -146,4 +162,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+//-------------------------------------------------------------------------------------------------
 export default HrmBrowser;
