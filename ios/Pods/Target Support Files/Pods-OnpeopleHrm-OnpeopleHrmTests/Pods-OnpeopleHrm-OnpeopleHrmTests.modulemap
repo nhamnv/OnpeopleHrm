@@ -1,0 +1,6 @@
+module Pods_OnpeopleHrm_OnpeopleHrmTests {
+  umbrella header "Pods-OnpeopleHrm-OnpeopleHrmTests-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -18,6 +18,7 @@
 		388408DE47BEA8BE3BD5D6A5 /* libPods-OnpeopleHrm-tvOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B7A96E18BF1E4B947CFED8D /* libPods-OnpeopleHrm-tvOS.a */; };
 		6FAADFF881EBC5CC86A6A0AF /* libPods-OnpeopleHrm-OnpeopleHrmTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CB75C890ACD626404EBCE0A /* libPods-OnpeopleHrm-OnpeopleHrmTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		8460EE4D2563C2AF006A0CAE /* main.jsbundle in Resources */ = {isa = PBXBuildFile; fileRef = 008F07F21AC5B25A0029DE68 /* main.jsbundle */; };
 		BA0C5446992FF7DDB7D44B2B /* libPods-OnpeopleHrm-tvOSTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 729045740068A2353EE456E1 /* libPods-OnpeopleHrm-tvOSTests.a */; };
 		BB497A4EC70CF71781D0968E /* libPods-OnpeopleHrm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E77E59907714CF81CEA4A66 /* libPods-OnpeopleHrm.a */; };
 /* End PBXBuildFile section */
@@ -59,6 +60,7 @@
 		5B7A96E18BF1E4B947CFED8D /* libPods-OnpeopleHrm-tvOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OnpeopleHrm-tvOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		729045740068A2353EE456E1 /* libPods-OnpeopleHrm-tvOSTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OnpeopleHrm-tvOSTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = OnpeopleHrm/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		843B5DFC2563CD0F003D875D /* OnpeopleHrm.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = OnpeopleHrm.entitlements; path = OnpeopleHrm/OnpeopleHrm.entitlements; sourceTree = "<group>"; };
 		8921D2D2D0762A5D67261900 /* Pods-OnpeopleHrm-tvOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnpeopleHrm-tvOS.debug.xcconfig"; path = "Target Support Files/Pods-OnpeopleHrm-tvOS/Pods-OnpeopleHrm-tvOS.debug.xcconfig"; sourceTree = "<group>"; };
 		B5698251CAF082B29461DF53 /* Pods-OnpeopleHrm-OnpeopleHrmTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnpeopleHrm-OnpeopleHrmTests.debug.xcconfig"; path = "Target Support Files/Pods-OnpeopleHrm-OnpeopleHrmTests/Pods-OnpeopleHrm-OnpeopleHrmTests.debug.xcconfig"; sourceTree = "<group>"; };
 		C07D9846C8D10536F2CAC160 /* Pods-OnpeopleHrm-tvOSTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnpeopleHrm-tvOSTests.release.xcconfig"; path = "Target Support Files/Pods-OnpeopleHrm-tvOSTests/Pods-OnpeopleHrm-tvOSTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 		13B07FAE1A68108700A75B9A /* OnpeopleHrm */ = {
 			isa = PBXGroup;
 			children = (
+				843B5DFC2563CD0F003D875D /* OnpeopleHrm.entitlements */,
 				008F07F21AC5B25A0029DE68 /* main.jsbundle */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.m */,
@@ -341,6 +344,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8460EE4D2563C2AF006A0CAE /* main.jsbundle in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 			);
@@ -656,6 +660,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = OnpeopleHrm/OnpeopleHrm.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1.0.3;
@@ -683,6 +688,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = OnpeopleHrm/OnpeopleHrm.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1.0.3;

@@ -6,7 +6,6 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-import { getUniqueId, supported32BitAbis } from 'react-native-device-info';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-community/async-storage';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
@@ -25,9 +24,9 @@ const _height = Math.round(
 );
 const _width = Math.round(Dimensions.get('screen').width);
 const _hrmDomainKey = 'HrmDomain';
-//var StrHrmUrl = 'http://testhrm.ml/domain';
+var StrHrmUrl = 'http://demo.testhrm.ml/login';
 //var StrHrmUrl = 'https://onpeople.asia/domain';
-var StrHrmUrl = 'https://hrm.novaon.asia/login';
+//var StrHrmUrl = 'https://hrm.novaon.asia/login';
 //var StrHrmUrl = 'https://hrm.novaon.asia/logout';
 var currentUrl = '';
 const MacWifi = '';
@@ -37,9 +36,7 @@ const _persisDomain = async (key, jsonObj) => {
     await AsyncStorage.setItem(
       key,
       JSON.stringify(jsonObj.Domain).replace('"', ''),
-    ).then(() => {
-      return;
-    });
+    );
   } else {
     return;
   }
@@ -48,7 +45,7 @@ const _getPersisDomain = async (key) => {
   await AsyncStorage.getItem(key).then((result) => {
     StrHrmUrl = result;
     if(!StrHrmUrl){
-      StrHrmUrl = 'https://onpeople.asia/domain';
+      //StrHrmUrl = 'https://onpeople.asia/domain';
     }
   });
 };
@@ -59,9 +56,7 @@ class HrmBrowser extends Component {
 
   constructor() {
     //alert(getStatusBarHeight());
-    _getPersisDomain(_hrmDomainKey).then(() => {
-  
-    });
+    _getPersisDomain(_hrmDomainKey);
 
     super();
   }
@@ -70,12 +65,13 @@ class HrmBrowser extends Component {
 
     const onLoadEnd = () => {
       let data = {
-        Command: '__apppostSaveCheckinoutPanelState',
+        Command: '__apppost_SaveCheckinoutPanelState',
         UserMac: this.props.uuid,
-        WifiMac: MacWifi,//this.props.macWifi,
+        WifiMac: this.props.macWifi,
       };
       this.webView.postMessage(JSON.stringify(data));
-      //alert(data.WifiMac);
+      //alert('macWifi::'+this.props.macWifi);
+      //alert(JSON.stringify(data));
     };
 
     const onNavigationStateChange = (webViewState) => {
@@ -87,22 +83,22 @@ class HrmBrowser extends Component {
       let data = JSON.parse(event.nativeEvent.data);
       let postbackData = {};
       postbackData.UserMac = this.props.uuid;
-      postbackData.WifiMac = MacWifi;//'this.props.macWifi';
-
+      postbackData.WifiMac = this.props.macWifi;
+//alert(data);
       if (data) {
         // ------------------------------------------
-        if (data.Command === 'checkstate_checkinout') {
-          postbackData.Command = '__apppostSaveCheckinoutPanelState';
+        if (data.Command === '__posttoapp_checkstate_checkinout') {
+          postbackData.Command = '__apppost_SaveCheckinoutPanelState';
           this.webView.postMessage(JSON.stringify(postbackData));
           // ------------------------------------------
-        } else if (data.Command === 'checkinout') {
-          postbackData.Command = '__apppostCheckinOut';
+        } else if (data.Command === '__posttoapp_checkinout') {
+          postbackData.Command = '__apppost_CheckinOut';
           this.webView.postMessage(JSON.stringify(postbackData));
 
           alert('Mac wifi ::' + postbackData.WifiMac  +'\n' + 'Mac User ::' + postbackData.UserMac);
         }
         // ------------------------------------------
-        else if (data.Command === 'savedomain') {
+        else if (data.Command === '__posttoapp_savedomain') {
           //let newDomain = data.data.Domain;
           let newDomain = data.data;
           if ((newDomain && StrHrmUrl !== newDomain) || !StrHrmUrl) {
@@ -111,7 +107,7 @@ class HrmBrowser extends Component {
               // alert('Da luu domain newDomain::' + newDomain.Domain);
             });
           }
-          postbackData.Command = '__apppostSaveCheckinoutPanelState';
+          postbackData.Command = '__apppost_SaveCheckinoutPanelState';
           this.webView.postMessage(JSON.stringify(postbackData));
           // alert('From app::' + JSON.stringify(postbackData));
         }
