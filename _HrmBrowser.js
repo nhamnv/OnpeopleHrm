@@ -24,29 +24,40 @@ const _height = Math.round(
 );
 const _width = Math.round(Dimensions.get('screen').width);
 const _hrmDomainKey = 'HrmDomain';
-var StrHrmUrl = 'http://demo.testhrm.ml/login';
-//var StrHrmUrl = 'https://onpeople.asia/domain';
+//var StrHrmUrl = 'http://demo.testhrm.ml/login';
+var StrHrmUrl = 'https://onpeople.asia/domain';
 //var StrHrmUrl = 'https://hrm.novaon.asia/login';
 //var StrHrmUrl = 'https://hrm.novaon.asia/logout';
 var currentUrl = '';
-const MacWifi = '';
+var StrHrmUrlOrigin = StrHrmUrl;
+
+
 //-------------------------------------------------------------------------------------------------
-const _persisDomain = async (key, jsonObj) => {
-  if (jsonObj) {
-    await AsyncStorage.setItem(
+const _persisDomain = (key, domain) => {
+  //alert(domain);
+  let valueToSave = domain;
+
+  if (valueToSave) {
+    if (valueToSave.indexOf('denied') >= 0) {
+      valueToSave = StrHrmUrlOrigin.trim();
+    }
+    // dong nay truoc da bi cong dau nhay kep vao cuoi nen da bi loi access-denied
+    valueToSave = JSON.stringify(valueToSave).replace(/"/g,"").trim();
+    AsyncStorage.setItem(
       key,
-      JSON.stringify(jsonObj.Domain).replace('"', ''),
+      valueToSave,
     );
+//alert(valueToSave);
   } else {
+    //alert('domain::' + domain);
     return;
   }
+  //alert(jsonObj.Domain);
 };
-const _getPersisDomain = async (key) => {
-  await AsyncStorage.getItem(key).then((result) => {
-    StrHrmUrl = result;
-    if(!StrHrmUrl){
-      //StrHrmUrl = 'https://onpeople.asia/domain';
-    }
+const _getPersisDomain = (key) => {
+  AsyncStorage.getItem(key).then((result) => {
+    //alert(result); //ok
+    StrHrmUrl = result.trim();
   });
 };
 //-------------------------------------------------------------------------------------------------
@@ -72,10 +83,12 @@ class HrmBrowser extends Component {
       this.webView.postMessage(JSON.stringify(data));
       //alert('macWifi::'+this.props.macWifi);
       //alert(JSON.stringify(data));
+      //alert(StrHrmUrl);
     };
 
     const onNavigationStateChange = (webViewState) => {
-      currentUrl = webViewState.url;
+      currentUrl = webViewState.url.trim();
+      _persisDomain(_hrmDomainKey, currentUrl);
       //alert(currentUrl);
     };
 
@@ -84,7 +97,7 @@ class HrmBrowser extends Component {
       let postbackData = {};
       postbackData.UserMac = this.props.uuid;
       postbackData.WifiMac = this.props.macWifi;
-//alert(data);
+      //alert(data);
       if (data) {
         // ------------------------------------------
         if (data.Command === '__posttoapp_checkstate_checkinout') {
@@ -95,17 +108,15 @@ class HrmBrowser extends Component {
           postbackData.Command = '__apppost_CheckinOut';
           this.webView.postMessage(JSON.stringify(postbackData));
 
-          alert('Mac wifi ::' + postbackData.WifiMac  +'\n' + 'Mac User ::' + postbackData.UserMac);
+          //alert('Mac wifi ::' + postbackData.WifiMac  +'\n' + 'Mac User ::' + postbackData.UserMac);
         }
         // ------------------------------------------
         else if (data.Command === '__posttoapp_savedomain') {
-          //let newDomain = data.data.Domain;
-          let newDomain = data.data;
+          //alert('__posttoapp_savedomain::'+data.data);
+          let newDomain = data.data.trim();
           if ((newDomain && StrHrmUrl !== newDomain) || !StrHrmUrl) {
-            _persisDomain(_hrmDomainKey, data.data).then(() => {
-              // eslint-disable-next-line no-alert
-              // alert('Da luu domain newDomain::' + newDomain.Domain);
-            });
+            _persisDomain(_hrmDomainKey, newDomain);
+            //alert(data);
           }
           postbackData.Command = '__apppost_SaveCheckinoutPanelState';
           this.webView.postMessage(JSON.stringify(postbackData));
@@ -121,6 +132,10 @@ class HrmBrowser extends Component {
     const onRenderError = () => {
       //alert('onRenderError');
     };
+    const onLoadStart = (wView) => {
+
+      //alert('onLoadStart::'+JSON.stringify(wView));
+    };
 
     return (
       <WebView
@@ -132,12 +147,15 @@ class HrmBrowser extends Component {
         source={{ uri: StrHrmUrl }}
         style={{ flex: 1, height: _height, width: _width }}
         onLoadEnd={onLoadEnd}
+        onLoadStart={onLoadStart.bind(this)}
+
         onMessage={onMessage}
         onLoadError={onLoadError}
         renderError={onRenderError}
         startInLoadingState={true}
         renderLoading={ActivityIndicatorImplement}
         onNavigationStateChange={onNavigationStateChange.bind(this)}
+        originWhitelist={['*']}
       />
     );
   }
