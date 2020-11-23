@@ -1,6 +1,13 @@
 {
     "configurations": [
     {
+        "name": "Debug Android",
+        "cwd": "${workspaceFolder}",
+        "type": "reactnative",
+        "request": "launch",
+        "platform": "android"
+    },
+    {
         "name": "Flutter: Attach to Device",
         "type": "dart",
         "request": "attach"

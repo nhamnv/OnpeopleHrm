@@ -16,6 +16,7 @@ import {
   StatusBar,
   LogBox,
   Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import HrmBrowser from './_HrmBrowser';
 import {
@@ -27,8 +28,9 @@ import {
 import DeviceInfo from 'react-native-device-info';
 import { NetworkInfo } from 'react-native-network-info';
 import Geolocation from '@react-native-community/geolocation';
+import AsyncStorage from '@react-native-community/async-storage';
 
-
+LogBox.ignoreAllLogs();
 
 // https://www.npmjs.com/package/react-native-get-location
 //-------------------------------------------------------------------------------------------------
@@ -38,36 +40,33 @@ export async function ANDROID_requestLocationPermission() {
     const granted = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       {
-        'title': 'Example App',
-        'message': 'Example App access to your location '
+        'title': 'Onpeople HRM',
+        'message': 'Onpeople HRM needs access to your location to use wifi timekeeping feature.'
       }
     )
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       console.log("You can use the location")
-      alert("You can use the location");
     } else {
       console.log("location permission denied")
-      alert("Location permission denied");
     }
   } catch (err) {
-    console.warn(err)
+    console.log("ANDROID_requestLocationPermission error :: "+err)
   }
 }
 
+//----------------------------------------------
 const App: () => React$Node = () => {
   const [macWifi, setMacWifi] = useState('');
   const [uuid, setuuid] = useState('');
 
-
-
-
   useEffect(() => {
     try {
+
       // 1: First get permission to get wifi mac
-      if (Platform.OS === "ios") {
+      if (Platform.OS === 'ios') {
         Geolocation.requestAuthorization();
       }
-      else if (Platform === "android") {
+      else if (Platform.OS === 'android') {
         ANDROID_requestLocationPermission();
       }
 
@@ -88,7 +87,13 @@ const App: () => React$Node = () => {
             temp = arr.join(":");
             setMacWifi(temp);
 
-            alert("Origin::"+bssid+"\n iOS::"+temp);
+            //alert("Origin::"+bssid+"\n iOS::"+temp);
+          }
+          else if(Platform.OS === "android")
+          {
+            // Mac wifi ::74:83:c2:37:f7:f9
+            setMacWifi(temp);
+            console.log('Mac wifi for android device is :: '+temp);
           }
 
         }
@@ -100,7 +105,7 @@ const App: () => React$Node = () => {
   });
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      {/* <StatusBar barStyle="dark-content" backgroundColor='black'/> */}
       <SafeAreaView>
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"

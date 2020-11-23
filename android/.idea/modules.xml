@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/OnpeopleHrm.iml" filepath="$PROJECT_DIR$/.idea/modules/OnpeopleHrm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/OnpeopleHrm.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/OnpeopleHrm.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1722191216/OnpeopleHrm.react-native-community_async-storage.iml" filepath="$PROJECT_DIR$/.idea/modules/-1722191216/OnpeopleHrm.react-native-community_async-storage.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/639287788/OnpeopleHrm.react-native-community_geolocation.iml" filepath="$PROJECT_DIR$/.idea/modules/639287788/OnpeopleHrm.react-native-community_geolocation.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-33486415/OnpeopleHrm.react-native-community_netinfo.iml" filepath="$PROJECT_DIR$/.idea/modules/-33486415/OnpeopleHrm.react-native-community_netinfo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-411253271/OnpeopleHrm.react-native-device-info.iml" filepath="$PROJECT_DIR$/.idea/modules/-411253271/OnpeopleHrm.react-native-device-info.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/1874926184/OnpeopleHrm.react-native-get-location.iml" filepath="$PROJECT_DIR$/.idea/modules/1874926184/OnpeopleHrm.react-native-get-location.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/-161100279/OnpeopleHrm.react-native-network-info.iml" filepath="$PROJECT_DIR$/.idea/modules/-161100279/OnpeopleHrm.react-native-network-info.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/735584797/OnpeopleHrm.react-native-webview.iml" filepath="$PROJECT_DIR$/.idea/modules/735584797/OnpeopleHrm.react-native-webview.iml" />
+    </modules>
+  </component>
+</project>

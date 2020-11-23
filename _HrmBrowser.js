@@ -1,10 +1,11 @@
-import React, { Component, useCallback, useState } from 'react';
+import React, { Component, useCallback, useState, useEffect } from 'react';
 import {
   Dimensions,
   StatusBar,
   ActivityIndicator,
   View,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -24,80 +25,82 @@ const _height = Math.round(
 );
 const _width = Math.round(Dimensions.get('screen').width);
 const _hrmDomainKey = 'HrmDomain';
+const StrHrmUrlOrigin = 'https://onpeople.asia/domain';
 //var StrHrmUrl = 'http://demo.testhrm.ml/login';
-var StrHrmUrl = 'https://onpeople.asia/domain';
+//var StrHrmUrl = 'https://onpeople.asia/domain';
 //var StrHrmUrl = 'https://hrm.novaon.asia/login';
 //var StrHrmUrl = 'https://hrm.novaon.asia/logout';
+var StrHrmUrl = '';
 var currentUrl = '';
-var StrHrmUrlOrigin = StrHrmUrl;
 
 
 //-------------------------------------------------------------------------------------------------
-const _persisDomain = (key, domain) => {
-  //alert(domain);
-  let valueToSave = domain;
+const _persisDomain = async (key, domain) => {
+  try {
+    //alert(domain);
+    let valueToSave = domain.toString();
 
-  if (valueToSave) {
-    if (valueToSave.indexOf('denied') >= 0) {
-      valueToSave = StrHrmUrlOrigin.trim();
+    if (valueToSave) {
+      if (valueToSave.indexOf('denied') >= 0) {
+        valueToSave = StrHrmUrlOrigin.trim();
+      }
+      // dong nay truoc da bi cong dau nhay kep vao cuoi nen da bi loi access-denied
+      //valueToSave = JSON.stringify(valueToSave).replace(/"/g, '').trim();
+      valueToSave = valueToSave.replace(/"/g, '').trim();
+      await AsyncStorage.setItem(key, valueToSave.toString());
+      console.log('Ghi vao::' + valueToSave);
+    } else {
+      //alert('domain::' + domain);
+      return;
     }
-    // dong nay truoc da bi cong dau nhay kep vao cuoi nen da bi loi access-denied
-    valueToSave = JSON.stringify(valueToSave).replace(/"/g,"").trim();
-    AsyncStorage.setItem(
-      key,
-      valueToSave,
-    );
-//alert(valueToSave);
-  } else {
-    //alert('domain::' + domain);
-    return;
+  } catch (error) {
+    console.log('_persisDomain error :: ' + error);
   }
   //alert(jsonObj.Domain);
 };
-const _getPersisDomain = (key) => {
-  AsyncStorage.getItem(key).then((result) => {
-    //alert(result); //ok
-    StrHrmUrl = result.trim();
-  });
+const _getPersisDomain = async (key) => {
+  let temp = '';
+  try {
+    await AsyncStorage.getItem(key).then(result => {
+      if (result) {
+        temp = result.toString().trim();
+      }
+    });
+  } catch (error) {
+    console.log('_getPersisDomain error :: ' + error);
+  }
+  if (!temp) {
+    temp = StrHrmUrlOrigin;
+    console.log('_getPersisDomain blank; get default uri from StrHrmUrlOrigin variable.');
+  }
+  StrHrmUrl = temp.toString();
+  console.log('Doc ra StrHrmUrl ::' + StrHrmUrl);
+  return temp.toString();
 };
+
+_getPersisDomain(_hrmDomainKey).then(result => {
+  StrHrmUrl = result;
+});
 //-------------------------------------------------------------------------------------------------
+
+
+
 
 class HrmBrowser extends Component {
   webView = null;
 
   constructor() {
-    //alert(getStatusBarHeight());
-    _getPersisDomain(_hrmDomainKey);
-
     super();
   }
-
   render() {
 
-    const onLoadEnd = () => {
-      let data = {
-        Command: '__apppost_SaveCheckinoutPanelState',
-        UserMac: this.props.uuid,
-        WifiMac: this.props.macWifi,
-      };
-      this.webView.postMessage(JSON.stringify(data));
-      //alert('macWifi::'+this.props.macWifi);
-      //alert(JSON.stringify(data));
-      //alert(StrHrmUrl);
-    };
-
-    const onNavigationStateChange = (webViewState) => {
-      currentUrl = webViewState.url.trim();
-      _persisDomain(_hrmDomainKey, currentUrl);
-      //alert(currentUrl);
-    };
-
     const onMessage = (event) => {
+      console.log('onMessage of reactnative fires'); // android khong thay chay ham onMessage
       let data = JSON.parse(event.nativeEvent.data);
       let postbackData = {};
       postbackData.UserMac = this.props.uuid;
       postbackData.WifiMac = this.props.macWifi;
-      //alert(data);
+
       if (data) {
         // ------------------------------------------
         if (data.Command === '__posttoapp_checkstate_checkinout') {
@@ -106,21 +109,39 @@ class HrmBrowser extends Component {
           // ------------------------------------------
         } else if (data.Command === '__posttoapp_checkinout') {
           postbackData.Command = '__apppost_CheckinOut';
-          this.webView.postMessage(JSON.stringify(postbackData));
+          //this.webView.postMessage(JSON.stringify(postbackData));
 
-          //alert('Mac wifi ::' + postbackData.WifiMac  +'\n' + 'Mac User ::' + postbackData.UserMac);
+          postbackData.Command = '__apppost_showmessage';
+          //postMessage(JSON.stringify(postbackData));
+
+          console.log('Mac wifi ::' + postbackData.WifiMac + '\n' + 'Mac User ::' + postbackData.UserMac);
         }
         // ------------------------------------------
         else if (data.Command === '__posttoapp_savedomain') {
-          //alert('__posttoapp_savedomain::'+data.data);
-          let newDomain = data.data.trim();
+          //alert('__posttoapp_savedomain::'+data.data.Domain);
+          // data.data.Domain moi dung
+          let newDomain = data.data.Domain.toString();
           if ((newDomain && StrHrmUrl !== newDomain) || !StrHrmUrl) {
             _persisDomain(_hrmDomainKey, newDomain);
-            //alert(data);
+            //alert('newDomain::' + newDomain);
           }
           postbackData.Command = '__apppost_SaveCheckinoutPanelState';
           this.webView.postMessage(JSON.stringify(postbackData));
           // alert('From app::' + JSON.stringify(postbackData));
+        }
+        else if (data.Command === '__posttoapp_userlogout') {
+          //alert('__posttoapp_userlogout');
+          StrHrmUrl = StrHrmUrlOrigin;
+          _persisDomain(_hrmDomainKey, StrHrmUrlOrigin);
+          //alert('__posttoapp_userlogout::'+StrHrmUrl);
+        }
+        else if (data.Command === '__posttoapp_getdeviceinfo') {
+          postbackData.Command = '__apppost_pushdeviceinfo';
+          this.webView.postMessage(JSON.stringify(postbackData));
+          console.log('__posttoapp_getdeviceinfo');
+          console.log(JSON.stringify(postbackData));
+
+          //this.webView.injectJavaScript('$(#lblUserMac).val("'+postbackData.UserMac +'"); ');
         }
       }
     };
@@ -133,9 +154,25 @@ class HrmBrowser extends Component {
       //alert('onRenderError');
     };
     const onLoadStart = (wView) => {
-
       //alert('onLoadStart::'+JSON.stringify(wView));
     };
+    const onLoadEnd = () => {
+      let data = {
+        Command: '__apppost_SaveCheckinoutPanelState',
+        UserMac: this.props.uuid,
+        WifiMac: this.props.macWifi,
+      };
+      this.webView.postMessage(JSON.stringify(data));
+    };
+
+    const onNavigationStateChange = (webViewState) => {
+      currentUrl = webViewState.url.trim();
+      console.log('currentUrl::' + currentUrl);
+    };
+
+    // Phai dang ky
+    const registPostMessage = 'document.postMessage = function (data) { window.ReactNativeWebView.postMessage(data);};';
+    //const registPostMessage = 'document.addEventListener("message",onMessageListener, false);';
 
     return (
       <WebView
@@ -148,7 +185,6 @@ class HrmBrowser extends Component {
         style={{ flex: 1, height: _height, width: _width }}
         onLoadEnd={onLoadEnd}
         onLoadStart={onLoadStart.bind(this)}
-
         onMessage={onMessage}
         onLoadError={onLoadError}
         renderError={onRenderError}
@@ -156,6 +192,7 @@ class HrmBrowser extends Component {
         renderLoading={ActivityIndicatorImplement}
         onNavigationStateChange={onNavigationStateChange.bind(this)}
         originWhitelist={['*']}
+        injectedJavaScript={registPostMessage}
       />
     );
   }
