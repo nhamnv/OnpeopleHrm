@@ -1,4 +1,5 @@
-import React, { Component, useCallback, useState, useEffect } from 'react';
+//@flow
+import React, {Component, useCallback, useState, useEffect} from 'react';
 import {
   Dimensions,
   StatusBar,
@@ -6,10 +7,13 @@ import {
   View,
   StyleSheet,
   Platform,
+  BackHandler,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import {WebView} from 'react-native-webview';
 import AsyncStorage from '@react-native-community/async-storage';
-import { getStatusBarHeight } from 'react-native-status-bar-height';
+import {getStatusBarHeight} from 'react-native-status-bar-height';
+import {NetworkInfo} from 'react-native-network-info';
+import NetInfo from '@react-native-community/netinfo';
 
 //-------------------------------------------------------------------------------------------------
 
@@ -20,24 +24,31 @@ const ActivityIndicatorImplement = () => {
     </View>
   );
 };
+
+const PlatformOS = Platform.OS;
 const _height = Math.round(
   Dimensions.get('screen').height - 2 * getStatusBarHeight(),
 );
 const _width = Math.round(Dimensions.get('screen').width);
 const _hrmDomainKey = 'HrmDomain';
-const StrHrmUrlOrigin = 'https://onpeople.asia/domain';
-//var StrHrmUrl = 'http://demo.testhrm.ml/login';
-//var StrHrmUrl = 'https://onpeople.asia/domain';
-//var StrHrmUrl = 'https://hrm.novaon.asia/login';
-//var StrHrmUrl = 'https://hrm.novaon.asia/logout';
+//const StrHrmUrlOrigin = 'https://onpeople.asia/domain';
+const StrHrmUrlOrigin = 'http://testhrm.ml/domain';
+//const StrHrmUrlOrigin = 'https://onpeople.asia/domain';
+//const StrHrmUrlOrigin = 'https://hrm.novaon.asia/login';
+//const StrHrmUrlOrigin = 'https://hrm.novaon.asia/logout';
 var StrHrmUrl = '';
-var currentUrl = '';
+var currentUrl = StrHrmUrlOrigin;
+var registPostMessage = '';
 
+if (PlatformOS === 'android') {
+  registPostMessage =
+    'document.postMessage = function (data) {window.ReactNativeWebView.postMessage(data);};';
+}
 
 //-------------------------------------------------------------------------------------------------
 const _persisDomain = async (key, domain) => {
   try {
-    //alert(domain);
+    //console.log(domain);
     let valueToSave = domain.toString();
 
     if (valueToSave) {
@@ -48,20 +59,20 @@ const _persisDomain = async (key, domain) => {
       //valueToSave = JSON.stringify(valueToSave).replace(/"/g, '').trim();
       valueToSave = valueToSave.replace(/"/g, '').trim();
       await AsyncStorage.setItem(key, valueToSave.toString());
-      console.log('Ghi vao::' + valueToSave);
+      //alert('Ghi vao::' + valueToSave);
     } else {
-      //alert('domain::' + domain);
+      //console.log('domain::' + domain);
       return;
     }
   } catch (error) {
     console.log('_persisDomain error :: ' + error);
   }
-  //alert(jsonObj.Domain);
+  //console.log(jsonObj.Domain);
 };
 const _getPersisDomain = async (key) => {
   let temp = '';
   try {
-    await AsyncStorage.getItem(key).then(result => {
+    await AsyncStorage.getItem(key).then((result) => {
       if (result) {
         temp = result.toString().trim();
       }
@@ -71,20 +82,21 @@ const _getPersisDomain = async (key) => {
   }
   if (!temp) {
     temp = StrHrmUrlOrigin;
-    console.log('_getPersisDomain blank; get default uri from StrHrmUrlOrigin variable.');
+    console.log(
+      '_getPersisDomain blank; get default uri from StrHrmUrlOrigin variable.',
+    );
   }
   StrHrmUrl = temp.toString();
+  //this.webView.reload();
   console.log('Doc ra StrHrmUrl ::' + StrHrmUrl);
   return temp.toString();
 };
+if (!StrHrmUrl) {
+  _getPersisDomain(_hrmDomainKey);
+}
 
-_getPersisDomain(_hrmDomainKey).then(result => {
-  StrHrmUrl = result;
-});
 //-------------------------------------------------------------------------------------------------
-
-
-
+//_persisDomain(_hrmDomainKey, StrHrmUrlOrigin);
 
 class HrmBrowser extends Component {
   webView = null;
@@ -93,106 +105,147 @@ class HrmBrowser extends Component {
     super();
   }
   render() {
+    console.log('begin 1');
+    // Subscribe
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      console.log('Connection type', state.type); // ==> no bao la typewifi; 4G no bao la cellular
+      console.log('Is connected?', state.isConnected); // ==> no bao true
+    });
+
+    // Unsubscribe
+    unsubscribe();
 
     const onMessage = (event) => {
-      console.log('onMessage of reactnative fires'); // android khong thay chay ham onMessage
-      let data = JSON.parse(event.nativeEvent.data);
-      let postbackData = {};
-      postbackData.UserMac = this.props.uuid;
-      postbackData.WifiMac = this.props.macWifi;
+      if (
+        event &&
+        event.nativeEvent &&
+        event.nativeEvent.data &&
+        event.nativeEvent.data !== 'undefined'
+      ) {
+        console.log('onMessage react fired :: ' + event.nativeEvent.data);
+        if (!this.webView) {
+          alert('this.webView is null so onMessage will run out');
+          return;
+        }
 
-      if (data) {
-        // ------------------------------------------
-        if (data.Command === '__posttoapp_checkstate_checkinout') {
-          postbackData.Command = '__apppost_SaveCheckinoutPanelState';
-          this.webView.postMessage(JSON.stringify(postbackData));
+        let data = JSON.parse(event.nativeEvent.data);
+        let postbackData = {};
+        postbackData.UserMac = this.props.uuid;
+        postbackData.WifiMac = this.props.macWifi;
+
+        if (data) {
           // ------------------------------------------
-        } else if (data.Command === '__posttoapp_checkinout') {
-          postbackData.Command = '__apppost_CheckinOut';
-          //this.webView.postMessage(JSON.stringify(postbackData));
-
-          postbackData.Command = '__apppost_showmessage';
-          //postMessage(JSON.stringify(postbackData));
-
-          console.log('Mac wifi ::' + postbackData.WifiMac + '\n' + 'Mac User ::' + postbackData.UserMac);
-        }
-        // ------------------------------------------
-        else if (data.Command === '__posttoapp_savedomain') {
-          //alert('__posttoapp_savedomain::'+data.data.Domain);
-          // data.data.Domain moi dung
-          let newDomain = data.data.Domain.toString();
-          if ((newDomain && StrHrmUrl !== newDomain) || !StrHrmUrl) {
-            _persisDomain(_hrmDomainKey, newDomain);
-            //alert('newDomain::' + newDomain);
+          if (data.Command === 'posttoapp_checkstate_checkinout') {
+            postbackData.Command = 'apppost_SaveCheckinoutPanelState';
+            postMessageToPage(
+              'apppostSaveCheckinoutPanelState("' +
+                JSON.stringify(postbackData) +
+                '");',
+            );
+            // ------------------------------------------
+          } else if (data.Command === 'posttoapp_checkinout') {
+            postbackData.Command = 'apppost_CheckinOut';
+            postMessageToPage(
+              'apppostCheckinOut(' + JSON.stringify(postbackData) + ');',
+            );
+            //console.log('just call :: '+'apppostCheckinOut("' + JSON.stringify(postbackData) + '");')
           }
-          postbackData.Command = '__apppost_SaveCheckinoutPanelState';
-          this.webView.postMessage(JSON.stringify(postbackData));
-          // alert('From app::' + JSON.stringify(postbackData));
-        }
-        else if (data.Command === '__posttoapp_userlogout') {
-          //alert('__posttoapp_userlogout');
-          StrHrmUrl = StrHrmUrlOrigin;
-          _persisDomain(_hrmDomainKey, StrHrmUrlOrigin);
-          //alert('__posttoapp_userlogout::'+StrHrmUrl);
-        }
-        else if (data.Command === '__posttoapp_getdeviceinfo') {
-          postbackData.Command = '__apppost_pushdeviceinfo';
-          this.webView.postMessage(JSON.stringify(postbackData));
-          console.log('__posttoapp_getdeviceinfo');
-          console.log(JSON.stringify(postbackData));
-
-          //this.webView.injectJavaScript('$(#lblUserMac).val("'+postbackData.UserMac +'"); ');
+          // ------------------------------------------
+          else if (data.Command === 'posttoapp_savedomain') {
+            let newDomain = data.data.Domain.toString();
+            if ((newDomain && StrHrmUrl !== newDomain) || !StrHrmUrl) {
+              _persisDomain(_hrmDomainKey, newDomain);
+            }
+            postbackData.Command = 'apppost_SaveCheckinoutPanelState';
+            postMessageToPage(
+              'apppostSaveCheckinoutPanelState("' +
+                JSON.stringify(postbackData) +
+                '");',
+            );
+            // ------------------------------------------
+          } else if (data.Command === 'posttoapp_userlogout') {
+            //console.log('posttoapp_userlogout');
+            this.setState({StrHrmUrl: StrHrmUrlOrigin});
+            _persisDomain(_hrmDomainKey, StrHrmUrlOrigin);
+            postMessageToPage(
+              'apppostUserLogout("' + JSON.stringify(postbackData) + '");',
+            );
+            // ------------------------------------------
+          } else if (data.Command === 'posttoapp_getdeviceinfo') {
+            postbackData.Command = 'apppost_pushdeviceinfo';
+            postMessageToPage(
+              'apppostPushDeviceInfo("' + JSON.stringify(postbackData) + '");',
+            );
+          }
         }
       }
     };
-
-    const onLoadError = () => {
-      //alert('onLoadError');
+    const onLoadError = (wv) => {
+      console.log('onLoadError :: ' + wv);
     };
-
-    const onRenderError = () => {
-      //alert('onRenderError');
+    const onRenderError = (wv) => {
+      console.log(
+        'onRenderError :: ' + wv + '\n' + 'currentUrl :: ' + currentUrl,
+      );
+      //this.webView.reload();
     };
-    const onLoadStart = (wView) => {
-      //alert('onLoadStart::'+JSON.stringify(wView));
+    const onLoadStart = (wv) => {
+      console.log('onLoadStart :: ' + wv);
     };
-    const onLoadEnd = () => {
-      let data = {
-        Command: '__apppost_SaveCheckinoutPanelState',
+    const onLoadEnd = (wv) => {
+      console.log('onLoadEnd 1'); // ok
+      let postbackData = {
+        Command: 'apppostSaveCheckinoutPanelState',
         UserMac: this.props.uuid,
         WifiMac: this.props.macWifi,
       };
-      this.webView.postMessage(JSON.stringify(data));
+      postMessageToPage(
+        'apppostSaveCheckinoutPanelState("' +
+          JSON.stringify(postbackData) +
+          '");',
+      );
     };
-
+    const onError = (wv) => {
+      console.log('onError' + wv);
+      wv.source = {uri: StrHrmUrlOrigin};
+    };
     const onNavigationStateChange = (webViewState) => {
-      currentUrl = webViewState.url.trim();
+      //alert(JSON.stringify(webViewState));
+      currentUrl = webViewState.url.toString().trim();
       console.log('currentUrl::' + currentUrl);
+      if (currentUrl === 'about:blank' || currentUrl.indexOf('file:///') > -1) {
+        StrHrmUrl = StrHrmUrlOrigin;
+      }
+      console.log('onNavigationStateChange ==>currentUrl::' + currentUrl);
+      console.log('OS::' + Platform.OS);
     };
-
-    // Phai dang ky
-    const registPostMessage = 'document.postMessage = function (data) { window.ReactNativeWebView.postMessage(data);};';
-    //const registPostMessage = 'document.addEventListener("message",onMessageListener, false);';
+    const postMessageToPage = (callClientJsFunction) => {
+      this.webView.injectJavaScript(callClientJsFunction);
+      console.log('just call :: ' + callClientJsFunction);
+    };
+    //----------------------------------
 
     return (
       <WebView
-        ref={(r) => {
-          this.webView = r;
-        }}
+        ref={(r) => (this.webView = r)}
         useWebKit={true}
         javaScriptEnabled={true}
-        source={{ uri: StrHrmUrl }}
-        style={{ flex: 1, height: _height, width: _width }}
-        onLoadEnd={onLoadEnd}
+        source={{uri: StrHrmUrl}}
+        style={{flex: 1, height: _height, width: _width}}
+        onLoadEnd={onLoadEnd.bind(this)}
         onLoadStart={onLoadStart.bind(this)}
         onMessage={onMessage}
-        onLoadError={onLoadError}
-        renderError={onRenderError}
+        onError={onError.bind(this)}
+        onLoadError={onLoadError.bind(this)}
+        renderError={onRenderError.bind(this)}
         startInLoadingState={true}
         renderLoading={ActivityIndicatorImplement}
         onNavigationStateChange={onNavigationStateChange.bind(this)}
         originWhitelist={['*']}
-        injectedJavaScript={registPostMessage}
+        ignoreSslError={true}
+        cacheEnabled={false}
+        //injectedJavaScript={injectJs}
+        //onShouldStartLoadWithRequest={onNavigationStateChange.bind(this)} // ios
       />
     );
   }
@@ -211,6 +264,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     justifyContent: 'center',
+    // backgroundColor: 'green',
   },
 });
 
