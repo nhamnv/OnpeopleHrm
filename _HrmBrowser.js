@@ -32,18 +32,12 @@ const _height = Math.round(
 const _width = Math.round(Dimensions.get('screen').width);
 const _hrmDomainKey = 'HrmDomain';
 //const StrHrmUrlOrigin = 'https://onpeople.asia/domain';
-const StrHrmUrlOrigin = 'http://testhrm.ml/domain';
+const StrHrmUrlOrigin = 'http://demo.testhrm.ml/login';
 //const StrHrmUrlOrigin = 'https://onpeople.asia/domain';
 //const StrHrmUrlOrigin = 'https://hrm.novaon.asia/login';
 //const StrHrmUrlOrigin = 'https://hrm.novaon.asia/logout';
 var StrHrmUrl = '';
 var currentUrl = StrHrmUrlOrigin;
-var registPostMessage = '';
-
-if (PlatformOS === 'android') {
-  registPostMessage =
-    'document.postMessage = function (data) {window.ReactNativeWebView.postMessage(data);};';
-}
 
 //-------------------------------------------------------------------------------------------------
 const _persisDomain = async (key, domain) => {
@@ -124,7 +118,7 @@ class HrmBrowser extends Component {
       ) {
         console.log('onMessage react fired :: ' + event.nativeEvent.data);
         if (!this.webView) {
-          alert('this.webView is null so onMessage will run out');
+          console.log('this.webView is null so onMessage will run out');
           return;
         }
 
@@ -138,9 +132,9 @@ class HrmBrowser extends Component {
           if (data.Command === 'posttoapp_checkstate_checkinout') {
             postbackData.Command = 'apppost_SaveCheckinoutPanelState';
             postMessageToPage(
-              'apppostSaveCheckinoutPanelState("' +
+              'apppostSaveCheckinoutPanelState(' +
                 JSON.stringify(postbackData) +
-                '");',
+                ');',
             );
             // ------------------------------------------
           } else if (data.Command === 'posttoapp_checkinout') {
@@ -158,24 +152,27 @@ class HrmBrowser extends Component {
             }
             postbackData.Command = 'apppost_SaveCheckinoutPanelState';
             postMessageToPage(
-              'apppostSaveCheckinoutPanelState("' +
+              'apppostSaveCheckinoutPanelState(' +
                 JSON.stringify(postbackData) +
-                '");',
+                ');',
             );
             // ------------------------------------------
           } else if (data.Command === 'posttoapp_userlogout') {
             //console.log('posttoapp_userlogout');
-            this.setState({StrHrmUrl: StrHrmUrlOrigin});
+            StrHrmUrl = StrHrmUrlOrigin;
             _persisDomain(_hrmDomainKey, StrHrmUrlOrigin);
             postMessageToPage(
-              'apppostUserLogout("' + JSON.stringify(postbackData) + '");',
+              'apppostUserLogout(' + JSON.stringify(postbackData) + ');',
             );
             // ------------------------------------------
           } else if (data.Command === 'posttoapp_getdeviceinfo') {
             postbackData.Command = 'apppost_pushdeviceinfo';
-            postMessageToPage(
-              'apppostPushDeviceInfo("' + JSON.stringify(postbackData) + '");',
-            );
+            setTimeout(() => {
+              //alert('1');
+              postMessageToPage(
+                'apppostPushDeviceInfo(' + JSON.stringify(postbackData) + ');',
+              );
+            }, 1200);
           }
         }
       }
@@ -200,9 +197,9 @@ class HrmBrowser extends Component {
         WifiMac: this.props.macWifi,
       };
       postMessageToPage(
-        'apppostSaveCheckinoutPanelState("' +
+        'apppostSaveCheckinoutPanelState(' +
           JSON.stringify(postbackData) +
-          '");',
+          ');',
       );
     };
     const onError = (wv) => {
@@ -245,7 +242,6 @@ class HrmBrowser extends Component {
         ignoreSslError={true}
         cacheEnabled={false}
         //injectedJavaScript={injectJs}
-        //onShouldStartLoadWithRequest={onNavigationStateChange.bind(this)} // ios
       />
     );
   }
