@@ -4,6 +4,8 @@
  *
  * @format
  * @flow strict-local
+ * @flow react-native-network-info
+ * @flow @react-native-community/netinfo
  */
 
 import React, {useEffect, useState} from 'react';
@@ -22,7 +24,6 @@ import DeviceInfo from 'react-native-device-info';
 import {NetworkInfo} from 'react-native-network-info';
 import Geolocation from '@react-native-community/geolocation';
 import NetInfo from '@react-native-community/netinfo';
-
 
 LogBox.ignoreAllLogs();
 const PlatformOS = Platform.OS;
@@ -54,61 +55,53 @@ export async function ANDROID_requestLocationPermission() {
 //----------------------------------------------
 const App: () => React$Node = () => {
   const [macWifi, setMacWifi] = useState('');
-  const [uuid, setuuid] = useState('');
-  const [networkOk, setNetworkOk] = useState('');
-  const [connectionType, setConnectionType] = useState('');
-  //let networkOk = false;
-  console.log('begin 1');
-  // check network
-  const unsubscribe = NetInfo.addEventListener((state) => {
-    console.log('Connection type', state.type); // ==> no bao la typewifi; 4G no bao la cellular
-    console.log('Is connected?', state.isConnected); // ==> no bao true
-    //setNetworkOk(state.isConnected);
-    //setConnectionType(state.type);
-  });
+  const [deviceId, setDeviceId] = useState('');
+  // var macWifi = '';
+  // var deviceId = '';
 
-  // Unsubscribe
-  unsubscribe();
+  // const unsubscribe = NetInfo.addEventListener((state) => {
+  //   if (state.isConnected === true) {
+  //     console.log('có mạng');
+  //     return <InformActivity />;
+  //   } else {
+  //     console.log('không có mạng');
+  //     return <HomeActivity />;
+  //   }
+  // });
 
   useEffect(() => {
-    async function fetchNetworkinfo() {
-      await NetInfo.fetch().then((state) => {
-        //console.log('Connection type' + state.type);
-        //console.log('Is connected?', state.isConnected);
-        setNetworkOk(state.isConnected);
-        setConnectionType(state.type);
-      });
-    }
-
     async function GetMacWifi() {
-      await NetworkInfo.getBSSID().then(
-        (bssid) => {
-          let temp = bssid;
-          console.log('NetworkInfo.getBSSID()==>' + bssid);
-          if (temp) {
-            // iOS phai cong phan tu th 4 len 1 don vi moi = thuc te
-            if (PlatformOS === 'ios') {
-              //Mac wifi ::74:83:c2:37:f7:f9
-              let arr = temp.split(':');
-              let tempElement4 = arr[3];
-              arr[3] = parseInt(tempElement4) - 1;
+      try {
+        await NetworkInfo.getBSSID().then(
+          (bssid) => {
+            let temp = bssid;
+            console.log('NetworkInfo.getBSSID()==>' + bssid);
+            if (temp) {
+              // iOS phai cong phan tu th 4 len 1 don vi moi = thuc te
+              if (PlatformOS === 'ios') {
+                //Mac wifi ::74:83:c2:37:f7:f9
+                let arr = temp.split(':');
+                let tempElement4 = arr[3];
+                arr[3] = parseInt(tempElement4) - 1;
 
-              temp = arr.join(':');
-              setMacWifi(temp);
-
-              //alert('Origin::'+bssid+'\n iOS::'+temp);
-            } else if (PlatformOS === 'android') {
-              // Mac wifi ::74:83:c2:37:f7:f9
-              setMacWifi(temp);
-              console.log('Mac wifi for android device is :: ' + temp);
+                temp = arr.join(':');
+                setMacWifi(temp);
+                console.log('-----> Mac wifi of ios device is :: ' + temp);
+              } else if (PlatformOS === 'android') {
+                // Mac wifi ::74:83:c2:37:f7:f9
+                setMacWifi(temp);
+                console.log('-----> Mac wifi for android device is :: ' + temp);
+              }
             }
-          }
-        },
-        (error) => {
-          console.log('error v2 app.js' + error);
-          return ActivityIndicatorImplement();
-        },
-      );
+          },
+          (error) => {
+            console.log('error v2 app.js' + error);
+            //return ActivityIndicatorImplement();
+          },
+        );
+      } catch (error) {
+        console.log('await NetworkInfo.getBSSID() error :: ' + error);
+      }
     }
     //-----------------------
     try {
@@ -118,26 +111,18 @@ const App: () => React$Node = () => {
       } else if (PlatformOS === 'android') {
         ANDROID_requestLocationPermission();
       }
-      // console.log('333333'); // ok
-      let uniqueId = DeviceInfo.getUniqueId();
-      setuuid(uniqueId); // ok
-
-      fetchNetworkinfo().then(function () {
-        console.log('gogogo');
+      let uniqId = DeviceInfo.getUniqueId();
+      setDeviceId(uniqId); // ok
+      NetInfo.fetch('wifi').then((state) => {
+        //console.log('----- EVENT 0000 ----- Connection type=' + state.type + '-----Is connected=' + state.isConnected);
+        if (state.type === 'wifi') {
+          GetMacWifi();
+        }
       });
-
-      console.log('networkOk:' + networkOk + ' type:' + connectionType);
-      if (networkOk === true && connectionType === 'wifi') {
-        console.log('check ok; connectionType=' + connectionType); // vao day roi
-        GetMacWifi();
-        //alert('5555'); //ok
-      } else {
-        console.log('Network not found.');
-      }
     } catch (error) {
       console.log('error app.js' + error);
     }
-  }, [macWifi, uuid, networkOk, connectionType]);
+  }, [macWifi, deviceId]);
 
   return (
     <>
@@ -146,7 +131,7 @@ const App: () => React$Node = () => {
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollView}>
           <View style={styles.body}>
-            <HrmBrowser uuid={uuid} macWifi={macWifi} />
+            <HrmBrowser deviceId={deviceId} macWifi={macWifi} />
           </View>
         </ScrollView>
       </SafeAreaView>
